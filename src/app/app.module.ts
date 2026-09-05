@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { createObserveModule } from '@nestjs/observe';
+// import { createObserveModule } from '@nestjs/observe';
 import configuration from '../config/configuration.js';
 import { PrismaModule } from '../database/prisma/prisma.module.js';
 import { AuthModule } from '../modules/auth/auth.module.js';
