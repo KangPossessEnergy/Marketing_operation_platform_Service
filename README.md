@@ -25,6 +25,37 @@
 
 [Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
 
+## PostgreSQL + Prisma
+
+1. 创建本地环境文件：
+
+```bash
+cp .env.example .env
+```
+
+2. 启动 PostgreSQL。若尚未有本地实例，可用 Docker：
+
+```bash
+docker run --name nest-learn-postgres \
+  -e POSTGRES_USER=nest \
+  -e POSTGRES_PASSWORD=nest \
+  -e POSTGRES_DB=nest_learn \
+  -p 5432:5432 \
+  -d postgres:17-alpine
+```
+
+3. 根据实际 PostgreSQL 账号修改 `.env` 中的 `DATABASE_URL`，然后生成客户端、迁移并创建演示用户：
+
+```bash
+pnpm db:generate
+pnpm db:migrate
+pnpm db:seed
+```
+
+可用 `pnpm db:studio` 在浏览器中查看数据。`AUTH_USERNAME` 和
+`AUTH_PASSWORD` 只用于 `pnpm db:seed` 创建或更新初始用户；生产环境请设置
+唯一的 `JWT_SECRET` 和强密码。
+
 ## 登录接口
 
 接口地址：`POST /auth/login`
@@ -38,9 +69,9 @@
 }
 ```
 
-默认演示账号为 `admin / 123456`，也可以通过 `AUTH_USERNAME` 和 `AUTH_PASSWORD`
-环境变量修改。接口成功后返回 `Bearer` 访问令牌；生产环境必须设置
-`AUTH_USERNAME`、`AUTH_PASSWORD` 和随机的 `JWT_SECRET`。
+执行 `pnpm db:seed` 后，默认演示账号为 `admin / 123456`，也可以通过
+`AUTH_USERNAME` 和 `AUTH_PASSWORD` 环境变量修改。接口会从 PostgreSQL 查询用户并
+校验密码哈希，成功后返回 `Bearer` 访问令牌。
 
 ```bash
 curl -X POST http://localhost:3000/auth/login \

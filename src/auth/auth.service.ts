@@ -3,8 +3,10 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import { createHash, createHmac, timingSafeEqual } from 'node:crypto';
+import { createHmac } from 'node:crypto';
+import { PrismaService } from '../prisma/prisma.service.js';
 import { LoginDto } from './dto/login.dto.js';
+import { verifyPassword } from './password.js';
 
 const ACCESS_TOKEN_EXPIRES_IN_SECONDS = 60 * 60;
 
@@ -20,26 +22,27 @@ export interface LoginResult {
 
 @Injectable()
 export class AuthService {
-  private readonly demoUser = this.createDemoUser();
   private readonly jwtSecret = this.getJwtSecret();
 
-  login(body: LoginDto): LoginResult {
-    const credentials = this.parseCredentials(body);
+  constructor(private readonly prisma: PrismaService) {}
 
-    if (
-      credentials.username !== this.demoUser.username ||
-      !this.passwordMatches(credentials.password, this.demoUser.password)
-    ) {
+  async login(body: LoginDto): Promise<LoginResult> {
+    const credentials = this.parseCredentials(body);
+    const user = await this.prisma.user.findUnique({
+      where: { username: credentials.username },
+    });
+
+    if (!user || !verifyPassword(credentials.password, user.passwordHash)) {
       throw new UnauthorizedException('用户名或密码错误');
     }
 
     return {
-      accessToken: this.createAccessToken(),
+      accessToken: this.createAccessToken(user),
       tokenType: 'Bearer',
       expiresIn: ACCESS_TOKEN_EXPIRES_IN_SECONDS,
       user: {
-        id: this.demoUser.id,
-        username: this.demoUser.username,
+        id: user.id,
+        username: user.username,
       },
     };
   }
@@ -63,19 +66,12 @@ export class AuthService {
     };
   }
 
-  private passwordMatches(actual: string, expected: string): boolean {
-    const actualHash = createHash('sha256').update(actual).digest();
-    const expectedHash = createHash('sha256').update(expected).digest();
-
-    return timingSafeEqual(actualHash, expectedHash);
-  }
-
-  private createAccessToken(): string {
+  private createAccessToken(user: { id: string; username: string }): string {
     const now = Math.floor(Date.now() / 1000);
     const header = this.encodeTokenPart({ alg: 'HS256', typ: 'JWT' });
     const payload = this.encodeTokenPart({
-      sub: this.demoUser.id,
-      username: this.demoUser.username,
+      sub: user.id,
+      username: user.username,
       iat: now,
       exp: now + ACCESS_TOKEN_EXPIRES_IN_SECONDS,
     });
@@ -89,23 +85,6 @@ export class AuthService {
 
   private encodeTokenPart(value: object): string {
     return Buffer.from(JSON.stringify(value)).toString('base64url');
-  }
-
-  private createDemoUser() {
-    const username = process.env.AUTH_USERNAME;
-    const password = process.env.AUTH_PASSWORD;
-
-    if (process.env.NODE_ENV === 'production' && (!username || !password)) {
-      throw new Error(
-        'AUTH_USERNAME and AUTH_PASSWORD must be set in production',
-      );
-    }
-
-    return {
-      id: '1',
-      username: username ?? 'admin',
-      password: password ?? '123456',
-    };
   }
 
   private getJwtSecret(): string {

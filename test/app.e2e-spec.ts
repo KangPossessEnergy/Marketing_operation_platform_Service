@@ -2,15 +2,32 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { App } from 'supertest/types';
+import { hashPassword } from '../src/auth/password.js';
 import { AppModule } from '../src/learn/app.module.js';
+import { PrismaService } from '../src/prisma/prisma.service.js';
 
 describe('AppController (e2e)', () => {
   let app: INestApplication<App>;
+  const admin = {
+    id: 'user-admin',
+    username: 'admin',
+    passwordHash: hashPassword('123456'),
+  };
+  const prisma = {
+    user: {
+      findUnique: vi.fn(),
+    },
+  };
 
   beforeEach(async () => {
+    prisma.user.findUnique.mockResolvedValue(admin);
+
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
-    }).compile();
+    })
+      .overrideProvider(PrismaService)
+      .useValue(prisma)
+      .compile();
 
     app = moduleFixture.createNestApplication();
     await app.init();
@@ -32,7 +49,7 @@ describe('AppController (e2e)', () => {
     expect(response.body.accessToken.split('.')).toHaveLength(3);
     expect(response.body.tokenType).toBe('Bearer');
     expect(response.body.expiresIn).toBe(3600);
-    expect(response.body.user).toEqual({ id: '1', username: 'admin' });
+    expect(response.body.user).toEqual({ id: 'user-admin', username: 'admin' });
   });
 
   it('/auth/login (POST) validates required fields', () => {
