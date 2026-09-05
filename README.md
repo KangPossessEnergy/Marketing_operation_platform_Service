@@ -25,6 +25,29 @@
 
 [Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
 
+## 登录接口
+
+接口地址：`POST /auth/login`
+
+请求体：
+
+```json
+{
+  "username": "admin",
+  "password": "123456"
+}
+```
+
+默认演示账号为 `admin / 123456`，也可以通过 `AUTH_USERNAME` 和 `AUTH_PASSWORD`
+环境变量修改。接口成功后返回 `Bearer` 访问令牌；生产环境必须设置
+`AUTH_USERNAME`、`AUTH_PASSWORD` 和随机的 `JWT_SECRET`。
+
+```bash
+curl -X POST http://localhost:3000/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"123456"}'
+```
+
 ## Project setup
 
 ```bash

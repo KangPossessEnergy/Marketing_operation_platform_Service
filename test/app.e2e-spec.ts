@@ -23,6 +23,32 @@ describe('AppController (e2e)', () => {
       .expect('Hello World!');
   });
 
+  it('/auth/login (POST) returns an access token', async () => {
+    const response = await request(app.getHttpServer())
+      .post('/auth/login')
+      .send({ username: 'admin', password: '123456' })
+      .expect(200);
+
+    expect(response.body.accessToken.split('.')).toHaveLength(3);
+    expect(response.body.tokenType).toBe('Bearer');
+    expect(response.body.expiresIn).toBe(3600);
+    expect(response.body.user).toEqual({ id: '1', username: 'admin' });
+  });
+
+  it('/auth/login (POST) validates required fields', () => {
+    return request(app.getHttpServer())
+      .post('/auth/login')
+      .send({ username: 'admin' })
+      .expect(400);
+  });
+
+  it('/auth/login (POST) rejects invalid credentials', () => {
+    return request(app.getHttpServer())
+      .post('/auth/login')
+      .send({ username: 'admin', password: 'wrong-password' })
+      .expect(401);
+  });
+
   afterEach(async () => {
     await app.close();
   });
