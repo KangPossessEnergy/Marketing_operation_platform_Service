@@ -54,9 +54,43 @@ pnpm db:seed
 
 可用 `pnpm db:studio` 在浏览器中查看数据。`AUTH_USERNAME` 和
 `AUTH_PASSWORD` 只用于 `pnpm db:seed` 创建或更新初始用户；生产环境请设置
-唯一的 `JWT_SECRET` 和强密码。
+唯一的 `JWT_SECRET`、`SMS_CODE_SECRET` 和强密码。应用启动时会通过
+`ConfigModule` 读取分组配置，DTO 由全局 `ValidationPipe` 统一校验。
 
-## 登录接口
+## 目录结构
+
+```text
+src/
+  app/                    # 应用根模块和基础健康接口
+  common/                 # 跨模块装饰器、管道、守卫等
+  config/                 # 环境变量到应用配置的映射
+  database/prisma/        # Prisma 客户端和数据库基础设施
+  modules/auth/           # 认证控制器、服务、会话、验证码和短信网关
+  modules/users/          # 用户领域服务和 repository
+```
+
+认证模块通过 `UsersService` 和 `AuthRepository` 访问数据，短信通过
+`SmsGateway` 接口隔离供应商。默认 `SMS_PROVIDER=mock` 仅用于本地开发，验证码
+会输出到应用日志；生产环境必须替换为真实短信网关实现，不能继续使用 mock。
+
+## 认证接口
+
+### 注册
+
+接口地址：`POST /auth/register`
+
+请求体：
+
+```json
+{
+  "username": "new_user",
+  "password": "123456"
+}
+```
+
+成功返回 `201`，响应中包含用户公开信息和访问令牌，不会返回密码哈希。
+
+### 用户名密码登录
 
 接口地址：`POST /auth/login`
 
@@ -78,6 +112,43 @@ curl -X POST http://localhost:3000/auth/login \
   -H "Content-Type: application/json" \
   -d '{"username":"admin","password":"123456"}'
 ```
+
+### 短信验证码登录
+
+先发送验证码：
+
+```bash
+curl -X POST http://localhost:3000/auth/sms/send \
+  -H "Content-Type: application/json" \
+  -d '{"phone":"13800138000"}'
+```
+
+再登录：
+
+```bash
+curl -X POST http://localhost:3000/auth/login/sms \
+  -H "Content-Type: application/json" \
+  -d '{"phone":"13800138000","code":"123456"}'
+```
+
+本地 mock 模式下验证码默认使用 `SMS_FIXED_CODE`，未设置时会随机生成并写入
+日志。验证码只在数据库中保存哈希，成功校验后只能消费一次，并限制有效期、重试
+次数和发送频率。
+
+### 退出登录
+
+接口地址：`POST /auth/logout`
+
+退出时需要携带登录接口返回的访问令牌：
+
+```bash
+curl -X POST http://localhost:3000/auth/logout \
+  -H "Authorization: Bearer <access-token>"
+```
+
+接口返回 `204`，服务端会撤销对应会话；同一个令牌再次请求受保护接口会返回
+`401`。当前项目使用短时效 access token + 数据库会话撤销模型，后续接入 refresh
+token 时可在 `auth_sessions` 上继续扩展轮换策略。
 
 ## Project setup
 
