@@ -6,9 +6,9 @@ NestJS 项目作为运行环境，补齐 Node.js 层必须掌握的工程基础�
 
 相关教程：
 
-- [PostgreSQL 数据设计](./postgresql.md)
-- [Prisma 数据访问](./prisma.md)
-- [NestJS CRUD API](./nestjs.md)
+- [PostgreSQL 数据设计](./3_postgresql.md)
+- [Prisma 数据访问](./4_prisma.md)
+- [NestJS CRUD API](.2_/nestjs.md)
 
 ## 1. 一次请求穿过的边界
 
