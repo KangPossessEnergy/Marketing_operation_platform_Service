@@ -1,39 +1,63 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Nest Learn
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+一个基于 **NestJS + Node.js + PostgreSQL + Prisma** 的企业级后端学习项目。
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+语言版本：[English README](./README.en.md)
 
-## Description
+## 项目状态
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+当前项目已经实现：
 
-## PostgreSQL + Prisma
+- NestJS ESM + TypeScript 应用启动
+- PostgreSQL 数据库连接和 Prisma 迁移
+- 用户名密码注册和登录
+- 短信验证码登录（本地 mock）
+- 基于 access token 和数据库会话的 logout
+- DTO 全局校验
+- 用户、登录会话、短信验证码数据模型
+- 单元测试和端到端测试示例
 
-1. 创建本地环境文件：
+用户 CRUD 的完整企业级实现方式写在 [learn-docs/nestjs.md](./learn-docs/nestjs.md)
+中，目前作为学习和扩展指南提供。当前源码中的用户模块主要服务认证流程，尚未默认
+开放完整的 `GET /users`、`PATCH /users/:id` 等管理接口。
+
+## 技术栈
+
+- Node.js
+- TypeScript
+- NestJS
+- PostgreSQL
+- Prisma ORM
+- `class-validator` / `class-transformer`
+- Vitest
+- pnpm
+
+## 环境要求
+
+- Node.js 24+
+- pnpm
+- PostgreSQL 17，或可运行 Docker 的环境
+
+## 快速开始
+
+### 1. 安装依赖
+
+```bash
+pnpm install
+```
+
+### 2. 创建环境文件
 
 ```bash
 cp .env.example .env
 ```
 
-2. 启动 PostgreSQL。若尚未有本地实例，可用 Docker：
+根据本机 PostgreSQL 的账号、密码、端口和数据库名修改 `.env` 中的
+`DATABASE_URL`。
+
+### 3. 启动 PostgreSQL
+
+如果本机还没有 PostgreSQL，可以使用 Docker：
 
 ```bash
 docker run --name nest-learn-postgres \
@@ -44,7 +68,13 @@ docker run --name nest-learn-postgres \
   -d postgres:17-alpine
 ```
 
-3. 根据实际 PostgreSQL 账号修改 `.env` 中的 `DATABASE_URL`，然后生成客户端、迁移并创建演示用户：
+如果已经存在同名容器，可以启动它：
+
+```bash
+docker start nest-learn-postgres
+```
+
+### 4. 初始化数据库
 
 ```bash
 pnpm db:generate
@@ -52,60 +82,86 @@ pnpm db:migrate
 pnpm db:seed
 ```
 
-可用 `pnpm db:studio` 在浏览器中查看数据。`AUTH_USERNAME` 和
-`AUTH_PASSWORD` 只用于 `pnpm db:seed` 创建或更新初始用户；生产环境请设置
-唯一的 `JWT_SECRET`、`SMS_CODE_SECRET` 和强密码。应用启动时会通过
-`ConfigModule` 读取分组配置，DTO 由全局 `ValidationPipe` 统一校验。
-
-## 目录结构
+`db:seed` 会创建或更新演示账号，默认账号为：
 
 ```text
-src/
-  app/                    # 应用根模块和基础健康接口
-  common/                 # 跨模块装饰器、管道、守卫等
-  config/                 # 环境变量到应用配置的映射
-  database/prisma/        # Prisma 客户端和数据库基础设施
-  modules/auth/           # 认证控制器、服务、会话、验证码和短信网关
-  modules/users/          # 用户领域服务和 repository
+用户名：admin
+密码：123456
 ```
 
-认证模块通过 `UsersService` 和 `AuthRepository` 访问数据，短信通过
-`SmsGateway` 接口隔离供应商。默认 `SMS_PROVIDER=mock` 仅用于本地开发，验证码
-会输出到应用日志；生产环境必须替换为真实短信网关实现，不能继续使用 mock。
+可以通过 `AUTH_USERNAME` 和 `AUTH_PASSWORD` 修改演示账号。生产环境必须使用强
+密码和独立的密钥。
 
-## 认证接口
+### 5. 启动应用
+
+```bash
+pnpm start:dev
+```
+
+应用默认运行在：
+
+```text
+http://localhost:3000
+```
+
+根路径检查：
+
+```bash
+curl http://localhost:3000
+```
+
+## 数据库命令
+
+```bash
+# 生成 Prisma Client
+pnpm db:generate
+
+# 开发环境创建并应用迁移
+pnpm db:migrate
+
+# 生产环境应用已经提交的迁移
+pnpm db:deploy
+
+# 创建或更新演示用户
+pnpm db:seed
+
+# 在浏览器中查看数据库
+pnpm db:studio
+```
+
+运行 `pnpm db:studio` 后，通常可以访问：
+
+```text
+http://localhost:5555
+```
+
+当前数据库包含：
+
+- `users`
+- `auth_sessions`
+- `sms_verification_codes`
+- `_prisma_migrations`
+
+数据模型位于 [prisma/schema.prisma](./prisma/schema.prisma)，迁移文件位于
+`prisma/migrations/`。
+
+## 认证 API
 
 ### 注册
 
-接口地址：`POST /auth/register`
+`POST /auth/register`
 
-请求体：
-
-```json
-{
-  "username": "new_user",
-  "password": "123456"
-}
+```bash
+curl -X POST http://localhost:3000/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"username":"new_user","password":"123456"}'
 ```
 
-成功返回 `201`，响应中包含用户公开信息和访问令牌，不会返回密码哈希。
+成功返回 `201`，响应包含公开用户信息和 access token，不返回密码哈希。
 
 ### 用户名密码登录
 
-接口地址：`POST /auth/login`
-
-请求体：
-
-```json
-{
-  "username": "admin",
-  "password": "123456"
-}
-```
-
-执行 `pnpm db:seed` 后，默认演示账号为 `admin / 123456`，也可以通过
-`AUTH_USERNAME` 和 `AUTH_PASSWORD` 环境变量修改。接口会从 PostgreSQL 查询用户并
-校验密码哈希，成功后返回 `Bearer` 访问令牌。
+`POST /auth/login`
 
 ```bash
 curl -X POST http://localhost:3000/auth/login \
@@ -113,9 +169,24 @@ curl -X POST http://localhost:3000/auth/login \
   -d '{"username":"admin","password":"123456"}'
 ```
 
-### 短信验证码登录
+典型响应：
 
-先发送验证码：
+```json
+{
+  "accessToken": "<access-token>",
+  "tokenType": "Bearer",
+  "expiresIn": 3600,
+  "user": {
+    "id": "<user-id>",
+    "username": "admin",
+    "phone": null
+  }
+}
+```
+
+### 发送短信验证码
+
+`POST /auth/sms/send`
 
 ```bash
 curl -X POST http://localhost:3000/auth/sms/send \
@@ -123,7 +194,9 @@ curl -X POST http://localhost:3000/auth/sms/send \
   -d '{"phone":"13800138000"}'
 ```
 
-再登录：
+### 短信验证码登录
+
+`POST /auth/login/sms`
 
 ```bash
 curl -X POST http://localhost:3000/auth/login/sms \
@@ -131,109 +204,121 @@ curl -X POST http://localhost:3000/auth/login/sms \
   -d '{"phone":"13800138000","code":"123456"}'
 ```
 
-本地 mock 模式下验证码默认使用 `SMS_FIXED_CODE`，未设置时会随机生成并写入
-日志。验证码只在数据库中保存哈希，成功校验后只能消费一次，并限制有效期、重试
-次数和发送频率。
+本地 `SMS_PROVIDER=mock` 模式下，验证码默认使用 `SMS_FIXED_CODE`；如果没有
+配置固定验证码，会随机生成并写入应用日志。生产环境必须替换为真实短信供应商，
+不能继续使用 mock。
+
+验证码在数据库中只保存哈希，成功校验后只能消费一次，同时具备有效期、最大尝试
+次数和发送频率限制。
 
 ### 退出登录
 
-接口地址：`POST /auth/logout`
-
-退出时需要携带登录接口返回的访问令牌：
+`POST /auth/logout`
 
 ```bash
 curl -X POST http://localhost:3000/auth/logout \
   -H "Authorization: Bearer <access-token>"
 ```
 
-接口返回 `204`，服务端会撤销对应会话；同一个令牌再次请求受保护接口会返回
-`401`。当前项目使用短时效 access token + 数据库会话撤销模型，后续接入 refresh
-token 时可在 `auth_sessions` 上继续扩展轮换策略。
+成功返回 `204`。服务端会撤销数据库中的会话，因此同一个 access token 之后不能
+继续访问受保护接口。
 
-## Project setup
+## 配置项
 
-```bash
-$ pnpm install
+主要环境变量如下：
+
+| 变量                       | 用途                                 |
+| -------------------------- | ------------------------------------ |
+| `DATABASE_URL`             | PostgreSQL 连接地址                  |
+| `JWT_SECRET`               | access token 签名密钥                |
+| `ACCESS_TOKEN_EXPIRES_IN`  | access token 有效期，单位为秒        |
+| `AUTH_USERNAME`            | seed 使用的演示用户名                |
+| `AUTH_PASSWORD`            | seed 使用的演示密码                  |
+| `SMS_PROVIDER`             | 短信供应商，开发环境使用 `mock`      |
+| `SMS_CODE_SECRET`          | 短信验证码哈希密钥                   |
+| `SMS_CODE_EXPIRES_IN`      | 验证码有效期，单位为秒               |
+| `SMS_CODE_RESEND_INTERVAL` | 验证码重发间隔，单位为秒             |
+| `SMS_CODE_MAX_ATTEMPTS`    | 验证码最大验证次数                   |
+| `SMS_FIXED_CODE`           | 本地测试固定验证码，生产环境禁止使用 |
+
+`.env` 不应提交到 Git。生产环境不要使用示例密钥、默认密码或固定验证码。
+
+## 目录结构
+
+```text
+src/
+  app/                    # 根模块和基础接口
+  common/                 # 通用装饰器、管道和跨模块能力
+  config/                 # 环境变量和应用配置
+  database/prisma/        # Prisma Client 和数据库基础设施
+  modules/auth/           # 注册、登录、短信、token 和会话
+  modules/users/          # 用户查询和认证相关用户服务
+prisma/
+  migrations/             # 数据库迁移
+  schema.prisma           # Prisma 数据模型
+  seed.mjs                # 开发数据初始化
+learn-docs/
+  postgresql.md           # PostgreSQL 企业级 CRUD
+  prisma.md               # Prisma 企业级 CRUD
+  nodejs.md               # Node.js 服务工程实践
+  nestjs.md               # NestJS 分层 CRUD 实践
+test/                     # e2e 测试
 ```
 
-## Compile and run the project
+## 学习文档
 
-```bash
-# development
-$ pnpm run start
+- [PostgreSQL：数据设计、索引、事务和迁移](./learn-docs/postgresql.md)
+- [Prisma：类型安全的数据访问和 CRUD](./learn-docs/prisma.md)
+- [Node.js：运行时、错误处理和安全边界](./learn-docs/nodejs.md)
+- [NestJS：Controller、Service、Repository 和 CRUD API](./learn-docs/nestjs.md)
 
-# watch mode
-$ pnpm run start:dev
+推荐学习顺序：
 
-# production mode
-$ pnpm run start:prod
+```text
+PostgreSQL -> Prisma -> Node.js -> NestJS
 ```
 
-## Run tests
+## 开发命令
 
 ```bash
-# unit tests
-$ pnpm run test
+# 启动开发服务
+pnpm start:dev
 
-# e2e tests
-$ pnpm run test:e2e
+# 构建项目
+pnpm build
 
-# test coverage
-$ pnpm run test:cov
+# 启动生产构建
+pnpm start:prod
+
+# 代码检查
+pnpm lint
+
+# 格式化 TypeScript 和测试文件
+pnpm format
+
+# 单元测试
+pnpm test
+
+# 监听模式运行测试
+pnpm test:watch
+
+# 端到端测试
+pnpm test:e2e
+
+# 测试覆盖率
+pnpm test:cov
 ```
 
-## Deployment
+## 生产环境注意事项
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
-```bash
-$ pnpm install -g @nestjs/mau
-$ mau deploy
-```
-
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
-
-## Observability
-
-In production applications, observability is essential for understanding how your system behaves, detecting issues early, and maintaining reliable performance.
-
-[NestJS Observe](https://observe.nestjs.com) automatically instruments your NestJS application, giving you deep visibility into your system with minimal setup:
-
-- **Distributed tracing:** Follow requests across services and understand how they flow through your system.
-- **Waterfall analysis:** Visualize request execution and identify slow operations, bottlenecks, and unexpected delays.
-- **Performance analysis:** Analyze application performance in real time and quickly pinpoint areas that need optimization.
-- **Metrics:** Track key application and infrastructure metrics to understand system health and performance trends.
-- **Logging:** Centralize and correlate logs with traces and other telemetry to make debugging easier.
-- **Error tracking:** Detect errors quickly and investigate their root causes with the surrounding context.
-- **SLA monitoring:** Track service-level objectives and identify when your application is approaching or exceeding defined thresholds.
-- **Alarms and alerts:** Set up alerts for critical errors, performance degradation, SLA violations, and other anomalies so your team can react quickly.
-
-## Resources
-
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Auto-instrument your application with [NestJS Observer](https://observer.nestjs.com). Distributed tracing, metrics, and logging made easy. Error tracking and performance monitoring for your NestJS applications.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+- 使用独立、强随机的 `JWT_SECRET` 和 `SMS_CODE_SECRET`。
+- 不要使用 `SMS_PROVIDER=mock`、`SMS_FIXED_CODE` 或默认演示密码。
+- 应用运行账号不要使用 PostgreSQL 超级用户。
+- 生产环境使用 `pnpm db:deploy`，不要使用 `pnpm db:migrate`。
+- 不要在日志中输出密码、token、数据库连接串、验证码或密码哈希。
+- 为管理类 CRUD 接口增加角色、权限和资源归属检查。
+- 对数据库进行备份，并定期验证恢复流程。
 
 ## License
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+本项目仅用于学习和本地开发。
