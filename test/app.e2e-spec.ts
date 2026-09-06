@@ -36,17 +36,36 @@ describe('AppController (e2e)', () => {
     attempts: number;
     createdAt: Date;
   }> = [];
+  const toPublicUser = (user: (typeof users)[number]) => ({
+    id: user.id,
+    username: user.username,
+    phone: user.phone,
+    phoneVerifiedAt: user.phoneVerifiedAt,
+    createdAt: user.createdAt,
+    updatedAt: user.updatedAt,
+  });
   let userSequence = 1;
   let smsCodeSequence = 1;
 
   const prisma = {
     user: {
-      findUnique: vi.fn(async ({ where }: { where: Record<string, string> }) =>
-        users.find(
-          (user) =>
-            (where.username !== undefined && user.username === where.username) ||
-            (where.phone !== undefined && user.phone === where.phone),
-        ) ?? null,
+      findUnique: vi.fn(
+        async ({
+          where,
+          select,
+        }: {
+          where: Record<string, string>;
+          select?: object;
+        }) => {
+          const user = users.find(
+            (item) =>
+              (where.id !== undefined && item.id === where.id) ||
+              (where.username !== undefined && item.username === where.username) ||
+              (where.phone !== undefined && item.phone === where.phone),
+          );
+
+          return user ? (select ? toPublicUser(user) : user) : null;
+        },
       ),
       create: vi.fn(
         async ({
@@ -72,7 +91,107 @@ describe('AppController (e2e)', () => {
           return user;
         },
       ),
+      findMany: vi.fn(
+        async ({
+          where,
+          skip,
+          take,
+          select,
+        }: {
+          where: {
+            OR?: Array<{
+              username?: { contains: string };
+              phone?: { contains: string };
+            }>;
+          };
+          skip: number;
+          take: number;
+          select?: object;
+        }) => {
+          const keyword =
+            where.OR?.[0]?.username?.contains ?? where.OR?.[1]?.phone?.contains;
+          const matchingUsers = keyword
+            ? users.filter(
+                (user) =>
+                  user.username?.toLowerCase().includes(keyword.toLowerCase()) ||
+                  user.phone?.includes(keyword),
+              )
+            : users;
+
+          return matchingUsers
+            .slice()
+            .sort(
+              (left, right) =>
+                right.createdAt.getTime() - left.createdAt.getTime() ||
+                right.id.localeCompare(left.id),
+            )
+            .slice(skip, skip + take)
+            .map((user) => (select ? toPublicUser(user) : user));
+        },
+      ),
+      count: vi.fn(
+        async ({
+          where,
+        }: {
+          where: {
+            OR?: Array<{
+              username?: { contains: string };
+              phone?: { contains: string };
+            }>;
+          };
+        }) => {
+          const keyword =
+            where.OR?.[0]?.username?.contains ?? where.OR?.[1]?.phone?.contains;
+
+          return keyword
+            ? users.filter(
+                (user) =>
+                  user.username?.toLowerCase().includes(keyword.toLowerCase()) ||
+                  user.phone?.includes(keyword),
+              ).length
+            : users.length;
+        },
+      ),
+      update: vi.fn(
+        async ({
+          where,
+          data,
+          select,
+        }: {
+          where: { id: string };
+          data: { phone?: string; phoneVerifiedAt?: Date | null };
+          select?: object;
+        }) => {
+          const user = users.find((item) => item.id === where.id);
+
+          if (!user) {
+            throw new Error('User not found');
+          }
+
+          if (data.phone !== undefined) {
+            user.phone = data.phone;
+          }
+          if (data.phoneVerifiedAt !== undefined) {
+            user.phoneVerifiedAt = data.phoneVerifiedAt;
+          }
+          user.updatedAt = new Date();
+
+          return select ? toPublicUser(user) : user;
+        },
+      ),
+      delete: vi.fn(async ({ where }: { where: { id: string } }) => {
+        const index = users.findIndex((user) => user.id === where.id);
+
+        if (index === -1) {
+          throw new Error('User not found');
+        }
+
+        return users.splice(index, 1)[0];
+      }),
     },
+    $transaction: vi.fn(async (operations: Array<Promise<unknown>>) =>
+      Promise.all(operations),
+    ),
     authSession: {
       create: vi.fn(
         async ({
@@ -296,6 +415,101 @@ describe('AppController (e2e)', () => {
       .post('/auth/login')
       .send({ username: 'admin', password: 'wrong-password' })
       .expect(401);
+  });
+
+  it('manages protected user records without exposing password hashes', async () => {
+    const loginResponse = await request(app.getHttpServer())
+      .post('/auth/login')
+      .send({ username: 'admin', password: '123456' })
+      .expect(200);
+    const token = loginResponse.body.accessToken as string;
+
+    await request(app.getHttpServer()).get('/users').expect(401);
+
+    const createResponse = await request(app.getHttpServer())
+      .post('/users')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ username: 'managed_user', password: '123456' })
+      .expect(201);
+    const userId = createResponse.body.id as string;
+
+    expect(createResponse.body).toMatchObject({
+      id: userId,
+      username: 'managed_user',
+      phone: null,
+    });
+    expect(createResponse.body).not.toHaveProperty('passwordHash');
+
+    const listResponse = await request(app.getHttpServer())
+      .get('/users?page=1&pageSize=20&keyword=managed')
+      .set('Authorization', `Bearer ${token}`)
+      .expect(200);
+
+    expect(listResponse.body).toMatchObject({
+      page: 1,
+      pageSize: 20,
+      total: 1,
+    });
+    expect(listResponse.body.items).toHaveLength(1);
+    expect(listResponse.body.items[0]).toMatchObject({
+      id: userId,
+      username: 'managed_user',
+    });
+    expect(listResponse.body.items[0]).not.toHaveProperty('passwordHash');
+
+    await request(app.getHttpServer())
+      .patch(`/users/${userId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ phone: '13800138000' })
+      .expect(200)
+      .expect(({ body }) => {
+        expect(body.phone).toBe('13800138000');
+        expect(body.phoneVerifiedAt).toBeNull();
+      });
+
+    await request(app.getHttpServer())
+      .get(`/users/${userId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .expect(200)
+      .expect(({ body }) => {
+        expect(body.phone).toBe('13800138000');
+        expect(body).not.toHaveProperty('passwordHash');
+      });
+
+    await request(app.getHttpServer())
+      .delete(`/users/${userId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .expect(204);
+
+    await request(app.getHttpServer())
+      .get(`/users/${userId}`)
+      .set('Authorization', `Bearer ${token}`)
+      .expect(404);
+  });
+
+  it('validates user CRUD input', async () => {
+    const loginResponse = await request(app.getHttpServer())
+      .post('/auth/login')
+      .send({ username: 'admin', password: '123456' })
+      .expect(200);
+    const token = loginResponse.body.accessToken as string;
+
+    await request(app.getHttpServer())
+      .post('/users')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ username: 'missing_password' })
+      .expect(400);
+
+    await request(app.getHttpServer())
+      .get('/users?page=1&pageSize=101')
+      .set('Authorization', `Bearer ${token}`)
+      .expect(400);
+
+    await request(app.getHttpServer())
+      .patch('/users/user-admin')
+      .set('Authorization', `Bearer ${token}`)
+      .send({})
+      .expect(400);
   });
 
   it('supports SMS login and revokes the session at logout', async () => {

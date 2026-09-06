@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { PrismaModule } from '../../database/prisma/prisma.module.js';
 import { UsersModule } from '../users/users.module.js';
 import { AuthController } from './controllers/auth.controller.js';
@@ -11,7 +11,7 @@ import { TokenService } from './services/token.service.js';
 import { VerificationCodeService } from './services/verification-code.service.js';
 
 @Module({
-  imports: [PrismaModule, UsersModule],
+  imports: [PrismaModule, forwardRef(() => UsersModule)],
   controllers: [AuthController],
   providers: [
     AuthService,
@@ -25,6 +25,6 @@ import { VerificationCodeService } from './services/verification-code.service.js
       useExisting: MockSmsGateway,
     },
   ],
-  exports: [AccessTokenGuard],
+  exports: [AccessTokenGuard, AuthRepository, TokenService],
 })
 export class AuthModule {}
