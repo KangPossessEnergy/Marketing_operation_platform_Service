@@ -260,6 +260,8 @@ prisma/
 learn-docs/
   postgresql.md           # PostgreSQL 企业级 CRUD
   prisma.md               # Prisma 企业级 CRUD
+  5_database_table_operations.md # 数据库表常见操作
+  6_backend_crud_flow.md  # 后端 CRUD 流程与设计思想
   nodejs.md               # Node.js 服务工程实践
   nestjs.md               # NestJS 分层 CRUD 实践
 test/                     # e2e 测试
@@ -269,6 +271,8 @@ test/                     # e2e 测试
 
 - [PostgreSQL：数据设计、索引、事务和迁移](./learn-docs/postgresql.md)
 - [Prisma：类型安全的数据访问和 CRUD](./learn-docs/prisma.md)
+- [数据库表常见操作](./learn-docs/5_database_table_operations.md)
+- [后端 CRUD 流程与设计思想](./learn-docs/6_backend_crud_flow.md)
 - [Node.js：运行时、错误处理和安全边界](./learn-docs/nodejs.md)
 - [NestJS：Controller、Service、Repository 和 CRUD API](./learn-docs/nestjs.md)
 
