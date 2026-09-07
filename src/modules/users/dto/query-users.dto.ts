@@ -20,14 +20,6 @@ export class QueryUsersDto {
   @Transform(({ value }) =>
     typeof value === 'string' ? value.trim() : value,
   )
-  @Length(1, 64)
-  keyword?: string;
-
-  @IsOptional()
-  @IsString()
-  @Transform(({ value }) =>
-    typeof value === 'string' ? value.trim() : value,
-  )
   username?: string;
 
   @IsOptional()

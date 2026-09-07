@@ -57,7 +57,8 @@ export class UsersService {
 
   async list(dto: QueryUsersDto) {
     const { items, total } = await this.usersRepository.findPage({
-      keyword: dto.keyword,
+      username: dto.username,
+      phone: dto.phone,
       skip: (dto.page - 1) * dto.pageSize,
       take: dto.pageSize,
     });

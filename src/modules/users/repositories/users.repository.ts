@@ -39,7 +39,6 @@ export class UsersRepository {
   }
 
   async findPage(params: {
-    keyword?: string;
     username?: string;
     phone?: string;
     skip: number;
@@ -61,20 +60,6 @@ export class UsersRepository {
         phone: {
           contains: params.phone,
         },
-      });
-    }
-
-    if (params.keyword) {
-      andConditions.push({
-        OR: [
-          {
-            username: {
-              contains: params.keyword,
-              mode: 'insensitive',
-            },
-          },
-          { phone: { contains: params.keyword } },
-        ],
       });
     }
 
