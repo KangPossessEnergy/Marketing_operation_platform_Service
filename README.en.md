@@ -15,6 +15,8 @@ The project currently includes:
 - Logout backed by access tokens and revocable database sessions
 - Global DTO validation
 - Data models for users, authentication sessions, and SMS verification codes
+- Data models for conversations and chat messages
+- Full conversation CRUD (list, details, create, rename, delete) and message storage APIs
 - Unit-test and end-to-end test examples
 
 The complete enterprise CRUD implementation guide is available in
@@ -225,6 +227,72 @@ curl -X POST http://localhost:3000/auth/logout \
 
 The endpoint returns `204` and revokes the corresponding database session. The same
 access token can no longer access protected endpoints.
+
+## Conversations & Messages API
+
+### Get Conversation List
+
+`GET /conversations`
+
+```bash
+curl http://localhost:3000/conversations
+```
+
+Returns conversations ordered by `updatedAt` in descending order, including `id`, `title`, `createdAt`, `updatedAt`, and message count `_count`.
+
+### Create New Conversation
+
+`POST /conversations`
+
+```bash
+curl -X POST http://localhost:3000/conversations \
+  -H "Content-Type: application/json" \
+  -d '{"title":"New Chat"}'
+```
+
+`title` is optional (defaults to `"新对话"`). Returns the newly created conversation object.
+
+### Get Conversation Details & Message History
+
+`GET /conversations/:id`
+
+```bash
+curl http://localhost:3000/conversations/<conversation-id>
+```
+
+Returns the conversation details along with all associated messages ordered chronologically (`messages`).
+
+### Update Conversation Title
+
+`PATCH /conversations/:id`
+
+```bash
+curl -X PATCH http://localhost:3000/conversations/<conversation-id> \
+  -H "Content-Type: application/json" \
+  -d '{"title":"Product Launch Campaign Strategy"}'
+```
+
+### Append Message
+
+`POST /conversations/:id/messages`
+
+```bash
+curl -X POST http://localhost:3000/conversations/<conversation-id>/messages \
+  -H "Content-Type: application/json" \
+  -d '{"role":"user","content":"Help me plan a marketing strategy"}'
+```
+
+Saves the message and automatically refreshes the conversation's `updatedAt`.
+
+### Delete Conversation
+
+`DELETE /conversations/:id`
+
+```bash
+curl -X DELETE http://localhost:3000/conversations/<conversation-id>
+```
+
+Deletes the conversation and cascades to all its associated messages (with fault-tolerant handling for mock IDs or already-deleted records).
 
 ## Configuration
 

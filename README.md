@@ -15,6 +15,8 @@
 - 基于 access token 和数据库会话的 logout
 - DTO 全局校验
 - 用户、登录会话、短信验证码数据模型
+- 会话（Conversation）与消息（Message）数据持久化模型
+- 会话增删改查（列表、详情、新建、重命名、删除）及消息存储 API
 - 单元测试和端到端测试示例
 
 用户 CRUD 的完整企业级实现方式写在 [learn-docs/nestjs.md](./learn-docs/nestjs.md)
@@ -223,6 +225,72 @@ curl -X POST http://localhost:3000/auth/logout \
 成功返回 `204`。服务端会撤销数据库中的会话，因此同一个 access token 之后不能
 继续访问受保护接口。
 
+## 会话与消息 API (Conversation & Message)
+
+### 获取会话列表
+
+`GET /conversations`
+
+```bash
+curl http://localhost:3000/conversations
+```
+
+返回按最近更新时间倒序排序的会话列表，包含 `id`、`title`、`createdAt`、`updatedAt` 以及关联消息数量 `_count`。
+
+### 创建新会话
+
+`POST /conversations`
+
+```bash
+curl -X POST http://localhost:3000/conversations \
+  -H "Content-Type: application/json" \
+  -d '{"title":"新对话"}'
+```
+
+`title` 为选填项，缺省为 `"新对话"`。返回新创建的会话对象。
+
+### 获取会话详情与历史消息
+
+`GET /conversations/:id`
+
+```bash
+curl http://localhost:3000/conversations/<conversation-id>
+```
+
+返回指定会话的基本信息及其按时间升序排列的所有历史消息列表（`messages`）。
+
+### 更新会话标题
+
+`PATCH /conversations/:id`
+
+```bash
+curl -X PATCH http://localhost:3000/conversations/<conversation-id> \
+  -H "Content-Type: application/json" \
+  -d '{"title":"新品发布会全渠道运营方案"}'
+```
+
+### 追加单条消息记录
+
+`POST /conversations/:id/messages`
+
+```bash
+curl -X POST http://localhost:3000/conversations/<conversation-id>/messages \
+  -H "Content-Type: application/json" \
+  -d '{"role":"user","content":"请帮我策划一份双十一营销方案"}'
+```
+
+保存消息并自动更新对应会话的 `updatedAt`。
+
+### 删除会话
+
+`DELETE /conversations/:id`
+
+```bash
+curl -X DELETE http://localhost:3000/conversations/<conversation-id>
+```
+
+删除会话及其名下的所有历史消息（级联清理，对不存在或本地模拟数据的 id 具备友好容错）。
+
 ## 配置项
 
 主要环境变量如下：
@@ -253,6 +321,7 @@ src/
   database/prisma/        # Prisma Client 和数据库基础设施
   modules/auth/           # 注册、登录、短信、token 和会话
   modules/users/          # 用户查询和认证相关用户服务
+  modules/conversation/   # 会话列表、新建会话、会话详情、消息存储和删除
 prisma/
   migrations/             # 数据库迁移
   schema.prisma           # Prisma 数据模型
