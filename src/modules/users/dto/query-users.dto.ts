@@ -22,4 +22,47 @@ export class QueryUsersDto {
   )
   @Length(1, 64)
   keyword?: string;
+
+  @IsOptional()
+  @IsString()
+  @Transform(({ value }) =>
+    typeof value === 'string' ? value.trim() : value,
+  )
+  username?: string;
+
+  @IsOptional()
+  @IsString()
+  @Transform(({ value }) =>
+    typeof value === 'string' ? value.trim() : value,
+  )
+  phone?: string;
+
+  @IsOptional()
+  @IsString()
+  @Transform(({ value }) =>
+    typeof value === 'string' ? value.trim() : value,
+  )
+  roleName?: string;
+
+  @IsOptional()
+  @IsString()
+  @Transform(({ value }) =>
+    typeof value === 'string' ? value.trim() : value,
+  )
+  storeName?: string;
+
+  @IsOptional()
+  @IsString()
+  @Transform(({ value }) =>
+    typeof value === 'string' ? value.trim() : value,
+  )
+  firstAgent?: string;
+
+  @IsOptional()
+  @IsString()
+  @Transform(({ value }) =>
+    typeof value === 'string' ? value.trim() : value,
+  )
+  secondAgent?: string;
 }
+

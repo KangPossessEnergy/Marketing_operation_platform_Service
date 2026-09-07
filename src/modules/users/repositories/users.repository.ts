@@ -40,22 +40,46 @@ export class UsersRepository {
 
   async findPage(params: {
     keyword?: string;
+    username?: string;
+    phone?: string;
     skip: number;
     take: number;
   }): Promise<{ items: PublicUserRecord[]; total: number }> {
-    const where: Prisma.UserWhereInput = params.keyword
-      ? {
-          OR: [
-            {
-              username: {
-                contains: params.keyword,
-                mode: 'insensitive',
-              },
+    const andConditions: Prisma.UserWhereInput[] = [];
+
+    if (params.username) {
+      andConditions.push({
+        username: {
+          contains: params.username,
+          mode: 'insensitive',
+        },
+      });
+    }
+
+    if (params.phone) {
+      andConditions.push({
+        phone: {
+          contains: params.phone,
+        },
+      });
+    }
+
+    if (params.keyword) {
+      andConditions.push({
+        OR: [
+          {
+            username: {
+              contains: params.keyword,
+              mode: 'insensitive',
             },
-            { phone: { contains: params.keyword } },
-          ],
-        }
-      : {};
+          },
+          { phone: { contains: params.keyword } },
+        ],
+      });
+    }
+
+    const where: Prisma.UserWhereInput =
+      andConditions.length > 0 ? { AND: andConditions } : {};
 
     const [items, total] = await this.prisma.$transaction([
       this.prisma.user.findMany({
