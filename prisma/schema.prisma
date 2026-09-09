@@ -20,6 +20,35 @@ model User {
   @@map("users")
 }
 
+enum OrganizationNodeType {
+  ROOT
+  REGION
+  AGENT
+  STORE
+}
+
+model OrganizationNode {
+  id           String               @id @default(cuid())
+  parentId     String?              @map("parent_id")
+  type         OrganizationNodeType
+  name         String
+  code         String               @unique
+  contactName  String?              @map("contact_name")
+  address      String?
+  contactPhone String?              @map("contact_phone")
+  region       String?
+  province     String?
+  sortOrder    Int                  @default(0) @map("sort_order")
+  createdAt    DateTime             @default(now()) @map("created_at")
+  updatedAt    DateTime             @updatedAt @map("updated_at")
+  parent       OrganizationNode?    @relation("OrganizationHierarchy", fields: [parentId], references: [id], onDelete: Restrict)
+  children     OrganizationNode[]   @relation("OrganizationHierarchy")
+
+  @@index([parentId, sortOrder, name])
+  @@index([type])
+  @@map("organization_nodes")
+}
+
 model Conversation {
   id        String    @id @default(cuid())
   userId    String?   @map("user_id")

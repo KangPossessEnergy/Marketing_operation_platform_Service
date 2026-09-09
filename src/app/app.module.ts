@@ -5,6 +5,7 @@ import configuration from '../config/configuration.js';
 import { PrismaModule } from '../database/prisma/prisma.module.js';
 import { AuthModule } from '../modules/auth/auth.module.js';
 import { ConversationModule } from '../modules/conversation/conversation.module.js';
+import { OrganizationModule } from '../modules/organization/organization.module.js';
 import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
 
@@ -20,6 +21,7 @@ import { AppService } from './app.service.js';
     PrismaModule,
     AuthModule,
     ConversationModule,
+    OrganizationModule,
     // ObserveModule.forRoot({
     //   appKey: 'YOUR_APP_KEY',
     //   appSecret: 'YOUR_APP_SECRET',

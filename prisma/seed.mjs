@@ -23,6 +23,44 @@ try {
     update: { passwordHash },
     create: { username, passwordHash },
   });
+
+  const root = await prisma.organizationNode.upsert({
+    where: { code: 'TMALL' },
+    update: {
+      name: '天猫精灵',
+      type: 'ROOT',
+      parentId: null,
+      contactName: '小爱',
+      address: '浙江省杭州市滨江区',
+      contactPhone: '19920807755',
+      region: '华东',
+      province: '浙江省',
+    },
+    create: {
+      name: '天猫精灵',
+      code: 'TMALL',
+      type: 'ROOT',
+      contactName: '小爱',
+      address: '浙江省杭州市滨江区',
+      contactPhone: '19920807755',
+      region: '华东',
+      province: '浙江省',
+    },
+  });
+
+  const regions = [
+    { name: '华南', code: 'SOUTH_CHINA' },
+    { name: '华东', code: 'EAST_CHINA' },
+    { name: '华北', code: 'NORTH_CHINA' },
+  ];
+
+  for (const region of regions) {
+    await prisma.organizationNode.upsert({
+      where: { code: region.code },
+      update: { name: region.name, parentId: root.id, type: 'REGION' },
+      create: { ...region, parentId: root.id, type: 'REGION' },
+    });
+  }
 } finally {
   await prisma.$disconnect();
 }
