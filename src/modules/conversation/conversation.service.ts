@@ -83,6 +83,7 @@ export class ConversationService {
           conversationId,
           role: dto.role,
           content: dto.content,
+          reasoningContent: dto.reasoningContent || null,
         },
       }),
       this.prisma.conversation.update({

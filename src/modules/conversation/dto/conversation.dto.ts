@@ -20,4 +20,8 @@ export class CreateMessageDto {
   @IsNotEmpty()
   @IsString()
   content: string;
+
+  @IsOptional()
+  @IsString()
+  reasoningContent?: string;
 }
